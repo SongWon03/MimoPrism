@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mimoprism"
+version = "0.1.0"
+description = "Cyclic peptide mimotope design and in silico scoring pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [{name = "Songwon Kim", email = "kimsongwon10@korea.ac.kr"}]
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=3.0",
+    "scipy>=1.14",
+    "biopython>=1.84",
+    "gemmi>=0.7",
+    "rdkit>=2024.3",
+    "prolif>=2.0",
+    "MDAnalysis>=2.7",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+rosetta = ["pyrosetta>=2026.29"]   # needs --find-links, see README
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+mimoprism = "mimoprism.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100

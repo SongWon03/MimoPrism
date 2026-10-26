@@ -1,0 +1,12 @@
+name: mimoprism
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.12
+  - bioconda::hmmer=3.3.2
+  - bioconda::muscle=3.8.1551
+  - pip
+  - pip:
+      - -r requirements.txt
