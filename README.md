@@ -1,6 +1,6 @@
 # MimoPrism
 
-Mimotope design and in silico scoring pipeline developed by [CSBL](https://github.com/CompSynBioLab-KoreaUniv).  
+Mimotope design and in silico scoring pipeline developed by [CSBL at Korea Univ](https://github.com/CompSynBioLab-KoreaUniv).  
 
 
 ## What is MimoPrism?  
@@ -62,13 +62,13 @@ Generation scale of MimoPrism pipeline can be controlled by [**`mimoprism_config
 3. Based on `CyclicMPNN`'s global score (lower is best), select best sequence for each backbone. Now we have N X M designed sequences for each parameter set. 
 4. Predict the complex structure of target mAb and designed mimotope candidates with `ESMFold2 (no MSA)`. 
 5. Select top K structures based on `ESMFold2 (no MSA)` **ipTM** score for each parameter set, and cross-validate the complex structure with `AlphaFold3`.
-6. Combine and filter the results based on [mimotope scoring function]().  
+6. Combine and filter the results based on [mimotope scoring function](https://github.com/SongWon03/MimoPrism/edit/main/README.md#mimotope-scoring-function).  
 
-### Hotspot Residues Selection  
+#### Hotspot Residues Selection  
 
 MimoPrism supports three strategies for hotspot selection.  
 
-1. **C${_\beta}$ distance based contact between natural antigen-monoclonal antibody complex**: From the [RFdiffusion Github document](https://github.com/RosettaCommons/RFdiffusion?tab=readme-ov-file#macrocyclic-peptide-design-with-rfpeptides), the definition of **hotspot residues** is part of residues in binding interface that binder must contact with target protein. In training step, they selected all residues which are within 10Å Cbeta distance of binder and randomly used 0-20% of them as interface hotspots. Based on this, we first compute the all residues in mAb which are within 10Å Cbeta distance of original peptide antigen and select `nearest 6 residues (default) for hotspot`.  
+1. **Cβ distance based contact between natural antigen-monoclonal antibody complex**: From the [RFdiffusion Github document](https://github.com/RosettaCommons/RFdiffusion?tab=readme-ov-file#macrocyclic-peptide-design-with-rfpeptides), the definition of **hotspot residues** is part of residues in binding interface that binder must contact with target protein. In training step, they selected all residues which are within 10Å Cbeta distance of binder and randomly used 0-20% of them as interface hotspots. Based on this, we first compute the all residues in mAb which are within 10Å Cbeta distance of original peptide antigen and select `nearest 6 residues (default) for hotspot`.  
 2. **Heavy atom distance based contact between natural antigen-monoclonal antibody complex**: We define the residues in mAb which are within 4.5 Å heavy atom distance of original peptide antigen as contact residues. We select `nearest 6 residues (default) for hotspot` from the contact residues.  
 3. **Paratope prediction by ParaSurf**: [ParaSurf](https://github.com/aggelos-michael-papadopoulos/ParaSurf) is deep learning based program to predict the paratope of given antibody.
 
