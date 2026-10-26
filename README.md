@@ -18,7 +18,7 @@ A mimotope is a peptide that mimics the conformation of an epitope-the specific 
 # 1. Create the environment
 git clone https://github.com/SongWon03/MimoPrism.git
 cd MimoPrism
-conda env create -f environment.yml
+conda env create -f environment.yaml
 conda activate mimoprism  
 
 # 2. Install ANARCI  
@@ -78,7 +78,7 @@ MimoPrism supports three strategies for hotspot selection.
 
 **Metrics**  
 
-- **ESMFold2 (no MSA)/ipTM**: ipTM (interface predicted TM-score) measures the accuracy of the predicted relative positions of the the subunits in a complex structure. Values higher than 0.8 represent confident high-quality predictions, while values below 0.6 suggest a failed prediction. ipTM values between 0.6 and 0.8 are a gray zone where predictions could be correct or incorrect. MimoCraft utilize ipTM as a primary filtering criterion for evaluating confidence of the predicted complex structure.  
+- **ESMFold2 (no MSA)/ipTM**: ipTM (interface predicted TM-score) measures the accuracy of the predicted relative positions of the the subunits in a complex structure. Values higher than 0.8 represent confident high-quality predictions, while values below 0.6 suggest a failed prediction. ipTM values between 0.6 and 0.8 are a gray zone where predictions could be correct or incorrect. MimoPrism utilize ipTM as a primary filtering criterion for evaluating confidence of the predicted complex structure.  
 - **ESMFold2 (no MSA)/pLDDT**: pLDDT (position local distance difference test) is confidence metric of the position of amino acid residues. > 0.9 means good.  
 - **AlphaFold3/ranking_score**: A scalar in the range [-100, 1.5] that corporates `ptm`, `iptm`, `fraction_disordered`, and `has_clash` into a single number with the following equation: 0.8 × ipTM + 0.2 × pTM + 0.5 × disorder − 100 × has_clash. Higher is better.
 - **AlphaFold3/ipTM**: ipTM (interface predicted TM-score) > 0.8 means good.  
