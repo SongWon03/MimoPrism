@@ -69,8 +69,9 @@ AA3TO1 = {
 }
 WATER = {"HOH", "WAT", "H2O", "DOD"}
 ANARCI_TYPE = {"H": "heavy", "K": "light", "L": "light"}
-# Default input/output directory: ../Input relative to this script.
-DEFAULT_DIR = Path(__file__).resolve().parent.parent / "Input"
+# Layout: <MimoPrism>/preprocess/preprocess.py → input folder is <MimoPrism>/input
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_DIR = PROJECT_DIR / "input"
 
 
 def fmt_atom_name(name):
@@ -440,7 +441,7 @@ def main():
         description="raw PDB/FASTA → noncanonical→canonical + Fv cut (ANARCI) + water/ligand removal + renumber")
     ap.add_argument("pdb_name", help="e.g. 6AXK → <dir>/6AXK.pdb, <dir>/rcsb_pdb_6AXK.fasta")
     ap.add_argument("--dir", default=str(DEFAULT_DIR),
-                    help="input/output directory (default: ../Input relative to this script)")
+                    help="input/output directory (default: <MimoPrism>/input)")
     ap.add_argument("--fasta", default=None, help="input FASTA (default <dir>/rcsb_pdb_<PDB>.fasta)")
     ap.add_argument("--out_dir", default=None, help="output directory (default: --dir)")
     # Fv
@@ -576,8 +577,8 @@ def main():
         nh, nl = counts.get(hid, 0), counts.get(lid, 0)
         print(f"[preprocess] receptor: VH={nh}({hid}) + VL={nl}({lid}) residues (processed PDB)")
         print("\nnext step:")
-        print(f"  ./select_hotspot.sh {out_stem} --no-preprocess --ab {hid} {lid}"
-              + (f" --ag {' '.join(ag_new)} --pep {ag_new[0]}" if ag_new else ""))
+        print(f"  python preprocess/select_hotspot.py {out_stem} --ab {hid} {lid}"
+              + (f" --ag {' '.join(ag_new)}" if ag_new else "") + " --ks 6")
         print(f"  CONTIGS_RECEPTOR=\"{hid}1-{nh}/0 {lid}1-{nl}/0\"")
 
 

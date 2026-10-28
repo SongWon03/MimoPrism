@@ -25,9 +25,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DIR = SCRIPT_DIR.parent / "Input"          # processed_<PDB>.pdb
-DEFAULT_TOOL_DIR = SCRIPT_DIR.parent / "tool"      # external tools (ParaSurf, ...)
+# Layout: <MimoPrism>/preprocess/select_hotspot.py
+SCRIPT_DIR = Path(__file__).resolve().parent               # preprocess/
+PROJECT_DIR = SCRIPT_DIR.parent                            # MimoPrism/  (input/, tool/, *.json)
+DEFAULT_DIR = PROJECT_DIR / "input"                        # processed_<PDB>.pdb
+DEFAULT_TOOL_DIR = PROJECT_DIR / "tool"                    # external tools (ParaSurf, ...)
+DEFAULT_ENV_JSON = PROJECT_DIR / "mimoprism_env.json"
+DEFAULT_CONFIG = PROJECT_DIR / "mimoprism_config.json"
 SOURCES = ("base", "cbeta", "contact", "parasurf")
 
 
@@ -217,14 +221,15 @@ def run_parasurf_predict(hl_pdb, ps):
     """Run ParaSurf blind_predict.py in its own interpreter. Returns (pred_pdb, pocket_pdb)."""
     script = Path(ps["dir"]) / ps["script"]
     if not script.is_file():
-        raise SystemExit(f"[FATAL] ParaSurf script not found: {script}  (check PARASURF_DIR / PARASURF_SCRIPT)")
+        raise SystemExit(f"[FATAL] ParaSurf script not found: {script}\n"
+                         "        clone ParaSurf into <MimoPrism>/tool/ParaSurf (or pass --parasurf-dir), "
+                         "or run without it: --sources base cbeta contact")
     env = os.environ.copy()
     if ps["dms_bin_dir"]:
         env["PATH"] = f"{ps['dms_bin_dir']}{os.pathsep}{env.get('PATH', '')}"
     if not shutil.which("dms", path=env["PATH"]):
         raise SystemExit("[FATAL] 'dms' (surface generation) not found on PATH — ParaSurf cannot build the surface.\n"
-                         "        Find it with `which dms` in the working ParaSurf env and set DMS_BIN_DIR "
-                         "(mimoprism_env.json Tools.DMS_BIN_DIR or --dms-bin-dir).")
+                         "        Find it with `which dms` in the working ParaSurf env and pass --dms-bin-dir.")
     # dms looks for the atom radius table in the cwd first, then in <LIBDIR>/dms/radii.
     if not any(Path(p).is_file() for p in (Path(ps["dir"]) / "radii", Path("/usr/local/lib/dms/radii"),
                                            Path.home() / ".local/lib/dms/radii")):
@@ -348,12 +353,12 @@ def default_suffix(config_path):
 
 # ── main ────────────────────────────────────────────────────────────────────
 def main():
-    env = load_env(os.environ.get("MP_ENV", SCRIPT_DIR / "mimoprism_env.json"))
+    env = load_env(os.environ.get("MP_ENV", DEFAULT_ENV_JSON))
     ap = argparse.ArgumentParser(
         description="hotspot candidates (base / cbeta / contact / parasurf) → mimoprism config")
     ap.add_argument("pdb_name", help="processed name, e.g. 6AXK_Fv → <dir>/processed_6AXK_Fv.pdb")
     ap.add_argument("--dir", default=None,
-                    help="folder with processed_<PDB>.pdb (default: ../Input relative to this script — "
+                    help="folder with processed_<PDB>.pdb (default: <MimoPrism>/input — "
                          "the same folder preprocess.py writes to)")
     ap.add_argument("--ab", nargs=2, metavar=("H", "L"), default=["H", "L"], help="antibody chain IDs")
     ap.add_argument("--ag", nargs="+", default=["P"], help="antigen chain IDs")
@@ -369,17 +374,18 @@ def main():
     ap.add_argument("--contact-cutoff", dest="contact_cutoff", type=float, default=4.5)
     ap.add_argument("--contact-rank", dest="contact_rank", choices=["dsasa", "dist"], default="dsasa")
     # config
-    ap.add_argument("--config", default=os.environ.get("MP_CONFIG", str(SCRIPT_DIR / "mimoprism_config.json")))
+    ap.add_argument("--config", default=os.environ.get("MP_CONFIG", str(DEFAULT_CONFIG)),
+                    help="campaign config to update (default: <MimoPrism>/mimoprism_config.json)")
     ap.add_argument("--suffix", default=None, help="design-name suffix (default: 1C{SS_LOOP_N}C1 from the config)")
     ap.add_argument("--mode", default="cyclic", help="design-name mode token")
     ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="print lists only; config untouched")
-    # ParaSurf (defaults from mimoprism_env.json)
-    ap.add_argument("--parasurf-dir", default=env_get(env, "PARASURF_DIR", str(DEFAULT_TOOL_DIR / "ParaSurf")),
-                    help="ParaSurf folder (default: PARASURF_DIR of mimoprism_env.json, else ../tool/ParaSurf)")
-    ap.add_argument("--parasurf-script", default=env_get(env, "PARASURF_SCRIPT", "blind_predict.py"))
-    ap.add_argument("--parasurf-weights", default=env_get(env, "PARASURF_WEIGHTS", "ParaSurf_best.pth"))
+    ap.add_argument("--parasurf-dir", default=str(DEFAULT_TOOL_DIR / "ParaSurf"),
+                    help="ParaSurf folder (default: <MimoPrism>/tool/ParaSurf)")
+    ap.add_argument("--parasurf-script", default="blind_predict.py")
+    ap.add_argument("--parasurf-weights", default="ParaSurf_best.pth")
     ap.add_argument("--parasurf-python", default=env_get(env, "PYTHON_PARASURF", env_get(env, "PYTHON", "python")))
-    ap.add_argument("--dms-bin-dir", default=env_get(env, "DMS_BIN_DIR", ""))
+    ap.add_argument("--dms-bin-dir", default=str(DEFAULT_TOOL_DIR / "ParaSurf" / "dms"),
+                    help="folder holding the dms binary (default: <MimoPrism>/tool/ParaSurf/dms)")
     args = ap.parse_args()
 
     d = Path(args.dir or DEFAULT_DIR).expanduser()
