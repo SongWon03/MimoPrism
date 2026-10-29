@@ -44,25 +44,38 @@ Please follow the [dependencies_setup_guide.md]() and specify your computational
 
 
 
-## Reducing Computation Time with Input Preprocessing
+## Input Preprocessing and Hotspot Selection
 
+The only required input for MimoPrism is **.pdb** and **.fasta** files of the complex structure of peptide antigen and mAb.  
 
+To reduce the computation time and set the input for MimoPrism pipeline, we 1) reduce the Fab region of mAb to only the Fv region, 2) remove water molecules and ligands.  
+And you can select hotspot residues in the mAb with [three strategies](https://github.com/SongWon03/MimoPrism/edit/main/README.md#hotspot-residues-selection) (Cβ distance, heavy atom distance, and ParaSurf).  
+
+```bash
+conda activate mimoprism
+
+# 1. Preprocess the input.pdb and input.fasta
+python ./preprocess/preprocess.py 6AXK --ab A B --ag E 
+
+# 2. Select hotspot residues in the mAb 
+python ./preprocess/select_hotspot.py 6AXK_Fv --ks 6 --sources base cbeta contact parasurf
+
+```
 
 
 ## MimoPrism Pipeline  
 
-After the environment is set up, you can run the pipeline with [**`run_mimoprism.sh`**]().  
+After the environment is set up, you can run the pipeline with [**`run_mimoprism_v0.1.0.sh`**]().  
 Generation scale of MimoPrism pipeline can be controlled by [**`mimoprism_config.json`**]().  
 <br>
 
-**`RFpeptides` &rarr; `CyclicMPNN` &rarr; `ESMFold2 (no MSA)` &rarr; `AlphaFold3 (MSA)`**  
+**`RFpeptides` &rarr; `CyclicMPNN` &rarr; `ESMFold2 (no MSA)` &rarr; `Filtering` &rarr; `AlphaFold3 (MSA)`**  
 
 1. Generate N cyclic peptide [backbone](https://proteopedia.org/w/Backbone_representations) designs for each parameter set (**hotspot residues**, **length**) with `RFpeptide`. 
 2. Generate M sequence designs (random temperature in range 0.1-0.3, [recommended](https://docs.nvidia.com/nim/bionemo/proteinmpnn/latest/endpoints.html)) for each backbone by `CycliMPNN`.
-3. Based on `CyclicMPNN`'s global score (lower is best), select best sequence for each backbone. Now we have N X M designed sequences for each parameter set. 
-4. Predict the complex structure of target mAb and designed mimotope candidates with `ESMFold2 (no MSA)`. 
-5. Select top K structures based on `ESMFold2 (no MSA)` **ipTM** score for each parameter set, and cross-validate the complex structure with `AlphaFold3`.
-6. Combine and filter the results based on [mimotope scoring function](https://github.com/SongWon03/MimoPrism/edit/main/README.md#mimotope-scoring-function).  
+3. Predict the complex structure of target mAb and designed mimotope candidates with `ESMFold2 (no MSA)`. For each backbone, only the best sequence design is selected based on `ESMFold2` **global score**. 
+4. Select top K structures based on 1) `ESMFold2 (no MSA)` **iPAE** score, 2) epitope RMSD to natural epitope, 3) delta G value by pyrosetta, and cross-validate the complex structure with `AlphaFold3`.
+5. Combine and filter the results based on [mimotope scoring function](https://github.com/SongWon03/MimoPrism/edit/main/README.md#mimotope-scoring-function).  
 
 #### Hotspot Residues Selection  
 
